@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# BatCode — abre o curso numa janela própria (modo app do Chrome).
+# Sem Electron, sem servidor, sem dependência: usa o navegador que já existe.
+set -euo pipefail
+
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INDEX="$APP_DIR/index.html"
+PERFIL="$HOME/.config/batcode-app"
+
+if [[ ! -f "$INDEX" ]]; then
+  echo "erro: index.html não encontrado em $APP_DIR" >&2
+  exit 1
+fi
+
+# procura um navegador baseado em Chromium
+NAV=""
+for c in google-chrome google-chrome-stable chromium chromium-browser brave-browser microsoft-edge; do
+  if command -v "$c" >/dev/null 2>&1; then NAV="$c"; break; fi
+done
+
+# sem Chromium? abre no navegador padrão mesmo (aba normal)
+if [[ -z "$NAV" ]]; then
+  echo "nenhum navegador Chromium encontrado — abrindo no navegador padrão"
+  xdg-open "file://$INDEX"
+  exit 0
+fi
+
+# --user-data-dir dedicado: janela isolada, não mistura com seu Chrome pessoal
+exec "$NAV" \
+  --app="file://$INDEX" \
+  --user-data-dir="$PERFIL" \
+  --no-first-run \
+  --no-default-browser-check \
+  --window-size=900,820 \
+  >/dev/null 2>&1

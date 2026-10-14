@@ -5,13 +5,20 @@
 <title>BatCode — aprenda C++ voando</title>
 <style>
   *{box-sizing:border-box}
-  body{margin:0}
+  :root{
+    --foreground:#E8E3F5; --muted-foreground:#9B8FB8; --accent:#A06BFF;
+    --border:#2E2545; --card:#160F28; --bg:#0D0818;
+  }
+  body{margin:0;background:var(--bg);color:var(--foreground);
+       font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+       padding:22px;display:flex;justify-content:center}
   .app{width:820px;max-width:100%}
 
   /* ===== HUD ===== */
   .hud{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
        border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:14px}
   .hud .logo{font-size:17px;font-weight:700;display:flex;align-items:center;gap:7px}
+  .hud batu-morcego{--batu-tamanho:46px;flex-shrink:0}
   .hud .bat{font-size:20px}
   .hud .stat{display:flex;align-items:center;gap:5px;font-size:13.5px;font-weight:600}
   .hud .stat small{font-weight:400;font-size:11px;color:var(--muted-foreground)}
@@ -142,7 +149,8 @@
 <div class="app">
 
   <div class="hud">
-    <div class="logo"><span class="bat">🦇</span> BatCode</div>
+    <batu-morcego id="batu" sem-sombra></batu-morcego>
+    <div class="logo">BatCode</div>
     <div class="stat" id="sXP">0 <small>XP</small></div>
     <div class="stat" id="sSeq">0 <small>seguidas</small></div>
     <div class="stat sp"><span class="vidas" id="sVida"></span></div>
@@ -154,6 +162,7 @@
 
 </div>
 
+<script src="batu.js"></script>
 <script>
 /* =========================================================
    BatCode — Morceguinho aprende C++
@@ -684,6 +693,8 @@ function hud(){
   let v=''; for(let i=0;i<5;i++) v += '<span class="'+(i<S.vidas?'':'off')+'">🩸</span>';
   document.getElementById('sVida').innerHTML = v;
   document.getElementById('fill').style.width = (S.feitas.length/F.length*100)+'%';
+  const b = document.getElementById('batu');
+  if(b) b.energia = S.vidas * 20;   // 5 vidas = 100 · 1 vida = 20 (cansado) · 0 = dormindo
 }
 
 function mapa(){
@@ -788,9 +799,11 @@ function confirma(){
   });
 
   const fb = document.getElementById('fb');
+  const batu = document.getElementById('batu');
   if(certo){
     if(!S.feitas.includes(at)){ S.feitas.push(at); S.xp += f.xp; }
     S.seq++;
+    if(batu) batu.comemorar();
     fb.className = 'fb bom';
     fb.innerHTML = '<b>Boa! +'+f.xp+' XP</b><br>' + d.ok;
     document.getElementById('bOk').textContent = (at < F.length-1) ? 'Próxima fase →' : 'Ver o mapa →';
@@ -798,6 +811,7 @@ function confirma(){
   } else {
     S.seq = 0;
     if(S.vidas > 0) S.vidas--;
+    if(batu) batu.dano();
     fb.className = 'fb';
     fb.innerHTML = '<b>Não foi dessa vez.</b><br>' + d.err + '<br><br>Lê a explicação de novo e tenta — a resposta certa está marcada.';
     document.getElementById('bOk').textContent = 'Tentar de novo';

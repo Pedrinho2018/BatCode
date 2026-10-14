@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Batu — teste dos estados</title>
+<style>
+  body{margin:0}
+  .wrap{width:780px;max-width:100%}
+  h2{font-size:17px;margin:0 0 3px}
+  .sub{font-size:12.5px;color:var(--muted-foreground);margin-bottom:18px}
+
+  .grade{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+  .box{border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;width:142px}
+  .box batu-morcego{--batu-tamanho:110px}
+  .box .nm{font-size:12px;font-weight:600;margin-top:6px}
+  .box .cd{font-size:10.5px;color:var(--muted-foreground);font-family:ui-monospace,Menlo,monospace;margin-top:2px}
+
+  .vivo{border:1px solid var(--border);border-radius:10px;padding:18px;display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+  .vivo batu-morcego{--batu-tamanho:150px}
+  .ctrl{flex:1;min-width:260px}
+  .barra{height:10px;border-radius:99px;background:var(--border);overflow:hidden;margin:8px 0 4px}
+  .barra i{display:block;height:100%;background:var(--accent);transition:width .35s ease}
+  .lbl{font-size:12.5px;color:var(--muted-foreground);margin-bottom:10px}
+  .lbl b{color:var(--foreground);font-size:14px}
+  button{font:inherit;font-size:13px;padding:8px 13px;border-radius:7px;cursor:pointer;
+         border:1px solid var(--border);background:transparent;color:var(--foreground);margin:0 6px 6px 0}
+  button:hover{border-color:var(--accent);color:var(--accent)}
+  .log{margin-top:12px;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;
+       color:var(--muted-foreground);border-left:2px solid var(--border);padding-left:10px;min-height:34px;line-height:1.6}
+  .mini{margin-top:20px;display:flex;align-items:center;gap:10px;font-size:13px;flex-wrap:wrap}
+  .mini batu-morcego{--batu-tamanho:34px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h2>🦇 Batu — teste dos 5 estados</h2>
+  <div class="sub">Componente <code>&lt;batu-morcego&gt;</code> renderizado em todos os estados.</div>
+
+  <div class="grade">
+    <div class="box"><batu-morcego estado="normal"></batu-morcego>
+      <div class="nm">Normal</div><div class="cd">energia &gt; 30</div></div>
+    <div class="box"><batu-morcego estado="cansado"></batu-morcego>
+      <div class="nm">Cansado</div><div class="cd">1 – 30</div></div>
+    <div class="box"><batu-morcego estado="dormindo"></batu-morcego>
+      <div class="nm">Dormindo</div><div class="cd">energia = 0</div></div>
+    <div class="box"><batu-morcego estado="dano"></batu-morcego>
+      <div class="nm">Dano</div><div class="cd">.dano()</div></div>
+    <div class="box"><batu-morcego estado="feliz"></batu-morcego>
+      <div class="nm">Feliz</div><div class="cd">.comemorar()</div></div>
+  </div>
+
+  <div class="vivo">
+    <batu-morcego id="b"></batu-morcego>
+    <div class="ctrl">
+      <div class="lbl">Energia: <b id="v">100</b> / 100 · estado: <b id="st">normal</b></div>
+      <div class="barra"><i id="bar" style="width:100%"></i></div>
+      <div style="margin-top:12px">
+        <button onclick="b.comemorar()">🎉 acertou</button>
+        <button onclick="b.dano(25)">💥 errou (−25)</button>
+        <button onclick="b.energia = b.energia + 25">⚡ +25</button>
+        <button onclick="b.energia = 0">😴 zerar</button>
+        <button onclick="b.energia = 100">🔄 reset</button>
+      </div>
+      <div class="log" id="log">pronto.</div>
+    </div>
+  </div>
+
+  <div class="mini">
+    <batu-morcego estado="normal" sem-sombra></batu-morcego>
+    <span>Tamanho de ícone (34px) com <code>sem-sombra</code> — serve pro HUD do jogo.</span>
+  </div>
+
+</div>
+
+<script src="batu.js"></script>
+<script>
+  const b = document.getElementById('b');
+  const log = document.getElementById('log');
+  function sync(){
+    document.getElementById('v').textContent = b.energia;
+    document.getElementById('bar').style.width = b.energia + '%';
+    document.getElementById('st').textContent = b.estado;
+  }
+  b.addEventListener('batu-estado', e => {
+    log.textContent = '→ batu-estado: ' + e.detail.estado;
+    sync();
+  });
+  new MutationObserver(sync).observe(b, {attributes:true, attributeFilter:['energia']});
+  sync();
+</script>
+</body>
+</html>
