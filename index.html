@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>BatCode — aprenda C++ voando</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  .app{width:820px;max-width:100%}
+
+  /* ===== HUD ===== */
+  .hud{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+       border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+  .hud .logo{font-size:17px;font-weight:700;display:flex;align-items:center;gap:7px}
+  .hud .bat{font-size:20px}
+  .hud .stat{display:flex;align-items:center;gap:5px;font-size:13.5px;font-weight:600}
+  .hud .stat small{font-weight:400;font-size:11px;color:var(--muted-foreground)}
+  .hud .sp{margin-left:auto}
+  .vidas{letter-spacing:2px;font-size:15px}
+  .vidas .off{opacity:.22}
+
+  .xpbar{height:6px;border-radius:99px;background:var(--border);overflow:hidden;margin-bottom:16px}
+  .xpbar i{display:block;height:100%;width:0%;background:var(--accent);transition:width .45s ease}
+
+  /* ===== MAPA ===== */
+  .mundo{margin-bottom:20px}
+  .mundo h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;
+            color:var(--muted-foreground);margin:0 0 9px 0;font-weight:700}
+  .trilha{display:flex;gap:9px;flex-wrap:wrap}
+
+  .fase{width:62px;border:none;background:transparent;cursor:pointer;
+        font:inherit;padding:0;display:flex;flex-direction:column;align-items:center;gap:5px}
+  .bolha{width:50px;height:50px;border-radius:50%;border:2px solid var(--border);
+         display:flex;align-items:center;justify-content:center;font-size:19px;
+         transition:transform .15s ease,border-color .15s ease}
+  .fase:hover .bolha{transform:scale(1.09)}
+  .fase .nm{font-size:10px;color:var(--muted-foreground);line-height:1.25;text-align:center}
+  .fase.lib .bolha{border-color:var(--accent)}
+  .fase.ok .bolha{border-color:var(--accent);background:var(--accent);color:var(--card)}
+  .fase.ok .nm{color:var(--foreground)}
+  .fase.lock{cursor:not-allowed}
+  .fase.lock .bolha{opacity:.3}
+  .fase.lock .nm{opacity:.3}
+  .fase.chefe .bolha{border-style:double;border-width:4px}
+
+  /* ===== LIÇÃO ===== */
+  .licao{border:1px solid var(--border);border-radius:12px;padding:20px 22px}
+  .licao .tag{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+              color:var(--accent);font-weight:700;margin-bottom:4px}
+  .licao h2{margin:0 0 14px 0;font-size:18px}
+  .licao p{margin:0 0 12px 0;font-size:14.5px;line-height:1.65}
+  .licao ul{margin:0 0 12px 0;padding-left:20px;font-size:14.5px;line-height:1.7}
+  .licao li{margin-bottom:4px}
+
+  code.i{font-family:ui-monospace,Menlo,monospace;font-size:13px;
+         border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+  pre{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.75;
+      border:1px solid var(--border);border-radius:8px;padding:12px 14px;
+      overflow-x:auto;margin:0 0 12px 0;white-space:pre}
+  pre .c{color:var(--muted-foreground)}
+  pre .k{color:var(--accent);font-weight:600}
+
+  .tela{border-left:3px solid var(--accent);padding:9px 13px;margin:0 0 14px 0;
+        font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.65;white-space:pre-wrap}
+  .tela .r{font-family:inherit;font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+           color:var(--muted-foreground);display:block;margin-bottom:4px}
+
+  .dica{border:1px solid var(--accent);border-radius:8px;padding:11px 14px;margin:14px 0 0;
+        font-size:14px;line-height:1.6}
+  .dica .r{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);
+           font-weight:700;display:block;margin-bottom:4px}
+
+  /* ===== DESAFIO ===== */
+  .des{border:1px dashed var(--border);border-radius:10px;padding:16px;margin-top:16px}
+  .des .r{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+          color:var(--muted-foreground);font-weight:700;margin-bottom:9px}
+  .des .q{font-size:14.5px;line-height:1.6;margin-bottom:13px}
+
+  .ops{display:flex;flex-direction:column;gap:7px}
+  .op{text-align:left;font:inherit;font-size:13.5px;padding:10px 13px;border-radius:8px;
+      border:1px solid var(--border);background:transparent;color:var(--foreground);cursor:pointer;
+      font-family:ui-monospace,Menlo,monospace;line-height:1.5}
+  .op:hover:not(:disabled){border-color:var(--accent)}
+  .op:disabled{cursor:default}
+  .op.certa{border-color:var(--accent);border-width:2px}
+  .op.errada{opacity:.4;text-decoration:line-through}
+
+  .lac{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+  .peca{font:inherit;font-family:ui-monospace,Menlo,monospace;font-size:13px;padding:7px 12px;
+        border-radius:7px;border:1px solid var(--border);background:transparent;
+        color:var(--foreground);cursor:pointer}
+  .peca:hover:not(:disabled){border-color:var(--accent)}
+  .peca:disabled{opacity:.25;cursor:default}
+  .slot{border:1px dashed var(--accent);border-radius:7px;padding:7px 12px;min-width:110px;
+        font-family:ui-monospace,Menlo,monospace;font-size:13px;display:inline-block;
+        color:var(--muted-foreground)}
+  .slot.ch{color:var(--foreground);border-style:solid}
+
+  .fb{margin-top:13px;padding:11px 14px;border-radius:8px;font-size:14px;line-height:1.6;
+      border:1px solid var(--border)}
+  .fb.bom{border-color:var(--accent)}
+  .fb b{font-weight:700}
+
+  .nav{display:flex;gap:8px;margin-top:17px;align-items:center;flex-wrap:wrap}
+  button.btn{font:inherit;font-size:13.5px;padding:9px 18px;border-radius:8px;cursor:pointer;
+             border:1px solid var(--border);background:transparent;color:var(--foreground)}
+  button.btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  button.btn:disabled{opacity:.3;cursor:not-allowed}
+  button.btn.pri{border-color:var(--accent);color:var(--accent);font-weight:600}
+  button.btn.gh{margin-left:auto;font-size:11.5px;padding:6px 11px;color:var(--muted-foreground)}
+
+  /* ===== CAVERNA (lista encadeada visual) ===== */
+  .caverna{display:flex;align-items:center;flex-wrap:wrap;min-height:72px;overflow-x:auto;margin-bottom:12px}
+  .sala{display:flex;border:2px solid var(--accent);border-radius:8px;overflow:hidden;flex-shrink:0;
+        animation:pop .3s ease}
+  @keyframes pop{from{opacity:0;transform:scale(.75)}to{opacity:1;transform:none}}
+  .sala .d{padding:8px 13px;font-size:13.5px;font-weight:600;font-family:ui-monospace,Menlo,monospace}
+  .sala .p{padding:8px 10px;border-left:2px dashed var(--border);font-size:10px;
+           color:var(--muted-foreground);display:flex;align-items:center}
+  .sala.aqui{border-width:3px}
+  .vo{padding:0 7px;font-size:17px;color:var(--accent);flex-shrink:0}
+  .fimc{font-size:12px;font-weight:700;color:var(--muted-foreground);padding-left:3px}
+  .tg{font-size:10px;font-weight:700;color:var(--accent);text-align:center;height:14px}
+  .cl{display:flex;flex-direction:column}
+  .vaz{font-size:13px;font-style:italic;color:var(--muted-foreground)}
+
+  .mem{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:11px}
+  .cel{border:1px solid var(--border);border-radius:7px;padding:8px 12px;
+       font-family:ui-monospace,Menlo,monospace;font-size:12px}
+  .cel.ac{border-color:var(--accent)}
+  .cel small{display:block;font-size:9.5px;color:var(--muted-foreground);
+             font-family:inherit;margin-bottom:3px}
+  .cel b{font-size:14px}
+
+  .fim{border:1px solid var(--accent);border-radius:12px;padding:24px;text-align:center}
+  .fim .bat{font-size:40px;margin-bottom:8px}
+  .fim h2{margin:0 0 10px;font-size:19px}
+  .fim p{font-size:14.5px;line-height:1.65;margin:0 0 10px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hud">
+    <div class="logo"><span class="bat">🦇</span> BatCode</div>
+    <div class="stat" id="sXP">0 <small>XP</small></div>
+    <div class="stat" id="sSeq">0 <small>seguidas</small></div>
+    <div class="stat sp"><span class="vidas" id="sVida"></span></div>
+  </div>
+
+  <div class="xpbar"><i id="fill"></i></div>
+
+  <div id="tela"></div>
+
+</div>
+
+<script>
+/* =========================================================
+   BatCode — Morceguinho aprende C++
+   Mundos 1-4 · 16 fases
+   ========================================================= */
+
+const MUNDOS = [
+  { nome:"Mundo 1 · O Ninho",        icone:"🥚", desc:"Primeiros voos" },
+  { nome:"Mundo 2 · A Mochila",      icone:"🎒", desc:"Vetores e structs" },
+  { nome:"Mundo 3 · Pilhas e Filas", icone:"⛏️", desc:"Guardar e enfileirar" },
+  { nome:"Mundo 4 · A Caverna",      icone:"🕳️", desc:"Listas encadeadas" }
+];
+
+const F = [];
+
+/* ---------- MUNDO 1 ---------- */
+F.push({ m:0, nm:"Acordar", ic:"🌙", xp:10,
+  tit:"O morceguinho acorda",
+  html:`
+<p>Todo programa C++ tem a mesma moldura. É o ninho do morceguinho — sempre igual.</p>
+<pre><span class="k">#include</span> &lt;iostream&gt;
+<span class="k">using namespace</span> std;
+
+<span class="k">int</span> main() {
+
+    <span class="c">// o código do jogo vai AQUI</span>
+
+    <span class="k">return</span> 0;
+}</pre>
+<ul>
+  <li><code class="i">#include &lt;iostream&gt;</code> — "quero escrever na tela"</li>
+  <li><code class="i">int main()</code> — <b>o jogo começa a rodar aqui dentro</b></li>
+  <li><code class="i">return 0;</code> — "acabou, deu certo"</li>
+</ul>
+<div class="dica"><span class="r">Fixa isso</span>
+Tudo que você escrever vai <b>dentro das chaves do main</b>. Fora dali, nada roda.</div>`,
+  des:{ tipo:"ops",
+    q:"Onde o código do seu jogo precisa ficar pra funcionar?",
+    ops:["Dentro das chaves { } do main","Antes do #include","Depois do return 0;","Em qualquer lugar do arquivo"],
+    certa:0,
+    ok:"Isso! O <b>main</b> é o ninho. Fora dele o C++ ignora.",
+    err:"Quase. O C++ só executa o que está <b>dentro das chaves do main</b>." }
+});
+
+F.push({ m:0, nm:"Piar", ic:"📢", xp:10,
+  tit:"Falar na tela — cout",
+  html:`
+<p>O morceguinho precisa se comunicar. Pra escrever na tela usamos <code class="i">cout</code>.</p>
+<pre>cout &lt;&lt; <span class="c">"Morceguinho acordou!"</span> &lt;&lt; endl;</pre>
+<div class="tela"><span class="r">na tela</span>Morceguinho acordou!</div>
+<ul>
+  <li><code class="i">cout</code> — <b>c</b>onsole <b>out</b>put, "saída na tela"</li>
+  <li><code class="i">&lt;&lt;</code> — "joga isso pra tela"</li>
+  <li><code class="i">endl</code> — pula uma linha</li>
+  <li><code class="i">;</code> — ponto final, <b>obrigatório</b></li>
+</ul>
+<div class="dica"><span class="r">Fixa isso</span>
+<code class="i">cout &lt;&lt;</code> escreve. <code class="i">endl</code> pula linha. Todo comando acaba com <code class="i">;</code></div>`,
+  des:{ tipo:"lac",
+    q:"Complete pra fazer o morceguinho gritar na tela:",
+    antes:'cout ', depois:' "Vou cacar!" << endl;',
+    pecas:["<<", ">>", "=", "+"], certa:"<<",
+    ok:"Boa! <code class='i'>&lt;&lt;</code> empurra o texto pra tela.",
+    err:"É <code class='i'>&lt;&lt;</code> — as setas apontam pra onde o dado vai: pra tela." }
+});
+
+F.push({ m:0, nm:"Energia", ic:"⚡", xp:15,
+  tit:"Variáveis — a energia do morcego",
+  html:`
+<p>Variável é uma <b>caixinha com nome</b> onde o jogo guarda um valor. O morceguinho precisa de energia:</p>
+<pre><span class="k">int</span> energia;      <span class="c">// cria a caixa</span>
+energia = 100;    <span class="c">// coloca 100 dentro</span>
+
+cout &lt;&lt; <span class="c">"Energia: "</span> &lt;&lt; energia;</pre>
+<div class="tela"><span class="r">na tela</span>Energia: 100</div>
+<p>Os três tipos que você vai usar:</p>
+<ul>
+  <li><code class="i">int</code> — inteiro → <code class="i">int energia = 100;</code></li>
+  <li><code class="i">string</code> — texto → <code class="i">string nome = "Batu";</code></li>
+  <li><code class="i">float</code> — com vírgula → <code class="i">float peso = 0.8;</code></li>
+</ul>
+<div class="des" style="border-style:solid;margin:0 0 12px">
+  <div class="r">teste ao vivo</div>
+  <div class="mem" id="m3"></div>
+  <button class="peca" onclick="v3(100)">energia = 100</button>
+  <button class="peca" onclick="v3(60)">levou dano −40</button>
+  <button class="peca" onclick="v3(20)">levou dano −40</button>
+  <div class="tela" style="margin:11px 0 0"><span class="r">cout &lt;&lt; energia;</span><span id="o3">—</span></div>
+</div>
+<div class="dica"><span class="r">Fixa isso</span>
+<b>Com aspas</b> escreve o texto literal. <b>Sem aspas</b> escreve o valor guardado dentro.</div>`,
+  des:{ tipo:"ops",
+    q:'Com <code class="i">int energia = 100;</code>, o que <code class="i">cout &lt;&lt; "energia";</code> mostra na tela?',
+    ops:['A palavra: energia','O número: 100','Dá erro de compilação','Nada, fica em branco'],
+    certa:0,
+    ok:"Exato! Com aspas vira texto literal. Sem aspas (<code class='i'>cout &lt;&lt; energia</code>) mostraria 100.",
+    err:"Olha as aspas. Com aspas o C++ escreve a <b>palavra</b>. Sem aspas é que ele busca o valor." }
+});
+
+F.push({ m:0, nm:"Bater asa", ic:"🔁", xp:15,
+  tit:"Repetir — for e while",
+  html:`
+<p>O morceguinho bate asa 5 vezes. Em vez de escrever 5 linhas iguais:</p>
+<pre><span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; 5; i++) {
+    cout &lt;&lt; <span class="c">"flap!"</span> &lt;&lt; endl;
+}</pre>
+<div class="tela"><span class="r">na tela</span>flap!
+flap!
+flap!
+flap!
+flap!</div>
+<p>O <code class="i">for</code> tem 3 partes:</p>
+<ul>
+  <li><code class="i">int i = 0</code> — <b>começa</b> o contador no zero</li>
+  <li><code class="i">i &lt; 5</code> — <b>continua enquanto</b> for menor que 5</li>
+  <li><code class="i">i++</code> — <b>soma 1</b> por volta</li>
+</ul>
+<p>O <code class="i">while</code> faz o mesmo, mas só olha a condição:</p>
+<pre><span class="k">while</span> (energia &gt; 0) {
+    cout &lt;&lt; <span class="c">"ainda voando"</span> &lt;&lt; endl;
+    energia--;
+}</pre>
+<div class="des" style="border-style:solid;margin:0 0 12px">
+  <div class="r">bate a asa</div>
+  <div class="mem" id="m4"></div>
+  <button class="peca" id="b4" onclick="v4()">dar uma volta do for</button>
+  <button class="peca" onclick="r4()">reiniciar</button>
+  <div class="tela" style="margin:11px 0 0"><span class="r">na tela</span><span id="o4">—</span></div>
+</div>
+<div class="dica"><span class="r">Fixa isso</span>
+<code class="i">while (p != NULL)</code> vai ser <b>exatamente</b> como você percorre uma lista encadeada no Mundo 4. Guarda esse formato.</div>`,
+  des:{ tipo:"ops",
+    q:'Quantas vezes roda: <code class="i">for (int i = 0; i &lt; 4; i++)</code>?',
+    ops:["4 vezes (i = 0,1,2,3)","5 vezes (i = 0,1,2,3,4)","3 vezes (i = 1,2,3)","Infinitas vezes"],
+    certa:0,
+    ok:"Isso! Começa em 0 e para <b>antes</b> do 4. São 4 voltas.",
+    err:"Conta de novo: i vale 0, 1, 2, 3 — quando chega em 4 a condição <code class='i'>i &lt; 4</code> fica falsa e para. São 4." }
+});
+
+/* ---------- MUNDO 2 ---------- */
+F.push({ m:1, nm:"Frutas", ic:"🍇", xp:15,
+  tit:"Vetor — as frutas coletadas",
+  html:`
+<p>O morceguinho coleta frutas. Vetor é uma <b>fileira de caixinhas</b> com um nome só:</p>
+<pre><span class="k">int</span> frutas[5];      <span class="c">// 5 espaços</span>
+
+frutas[0] = 10;
+frutas[1] = 25;
+frutas[2] = 7;</pre>
+<p>O número entre colchetes é a posição — e <b>começa no zero</b>:</p>
+<pre>posicao:  [0]  [1]  [2]  [3]  [4]
+valor:     10   25    7    ?    ?</pre>
+<p>Pra percorrer tudo, junta com o <code class="i">for</code>:</p>
+<pre><span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; 5; i++) {
+    cout &lt;&lt; frutas[i] &lt;&lt; endl;
+}</pre>
+<div class="dica"><span class="r">Fixa isso</span>
+Vetor de 5 vai de <code class="i">[0]</code> a <code class="i">[4]</code>. O problema dele: <b>tamanho fixo</b>.
+<br>É exatamente por isso que existe lista encadeada.</div>`,
+  des:{ tipo:"ops",
+    q:'Num vetor <code class="i">int frutas[5];</code>, qual é a <b>última</b> posição válida?',
+    ops:["frutas[4]","frutas[5]","frutas[6]","frutas[1]"],
+    certa:0,
+    ok:"Boa! 5 posições contadas do zero: 0,1,2,3,<b>4</b>. Usar <code class='i'>[5]</code> estoura o vetor.",
+    err:"Lembra que começa no <b>zero</b>. 5 posições = índices 0,1,2,3,4. O último é <code class='i'>[4]</code>." }
+});
+
+F.push({ m:1, nm:"Ficha", ic:"🦇", xp:20,
+  tit:"Struct — a ficha do morceguinho",
+  html:`
+<p>Vetor guarda vários dados <b>do mesmo tipo</b>. Mas o morceguinho tem nome (texto) <i>e</i> energia (número) juntos.</p>
+<p>Pra isso existe a <code class="i">struct</code> — você cria um <b>tipo novo</b>:</p>
+<pre><span class="k">struct</span> Morcego {
+    string nome;
+    <span class="k">int</span> energia;
+    <span class="k">int</span> ataque;
+};</pre>
+<p>Isso ainda não cria nenhum morcego. É só a <b>planta</b>. Agora usa:</p>
+<pre>Morcego batu;
+
+batu.nome = <span class="c">"Batu"</span>;
+batu.energia = 100;
+batu.ataque = 25;
+
+cout &lt;&lt; batu.nome &lt;&lt; <span class="c">" tem "</span> &lt;&lt; batu.energia &lt;&lt; <span class="c">" de energia"</span>;</pre>
+<div class="tela"><span class="r">na tela</span>Batu tem 100 de energia</div>
+<div class="dica"><span class="r">Fixa isso</span>
+<code class="i">struct</code> é a <b>planta</b>, não cria nada sozinha.
+<br>O ponto <code class="i">.</code> acessa o que tem dentro: <code class="i">batu.energia</code>.</div>`,
+  des:{ tipo:"lac",
+    q:"Complete pra dar 50 de energia ao morceguinho:",
+    antes:'batu', depois:'energia = 50;',
+    pecas:[".", "->", "::", "&"], certa:".",
+    ok:"Certo! Struct normal usa <b>ponto</b>. A seta <code class='i'>-&gt;</code> só aparece com ponteiro — vem no Mundo 4.",
+    err:"Aqui <code class='i'>batu</code> é uma struct normal (sem <code class='i'>*</code>), então usa <b>ponto</b>." }
+});
+
+/* ---------- MUNDO 3 ---------- */
+F.push({ m:2, nm:"Mochila", ic:"🎒", xp:20,
+  tit:"Pilha — a mochila do morceguinho",
+  html:`
+<p>A mochila do morceguinho funciona como uma <b>pilha de pratos</b>: o último item que entra é o primeiro que sai. Isso se chama <b>LIFO</b>.</p>
+<pre><span class="k">int</span> mochila[10];
+<span class="k">int</span> topo = -1;        <span class="c">// -1 = mochila vazia</span>
+
+<span class="c">// GUARDAR (push)</span>
+topo++;
+mochila[topo] = 10;   <span class="c">// guardou a fruta 10</span>
+
+topo++;
+mochila[topo] = 25;   <span class="c">// guardou a fruta 25</span>
+
+<span class="c">// VER o item de cima</span>
+cout &lt;&lt; mochila[topo];   <span class="c">// → 25</span>
+
+<span class="c">// TIRAR (pop)</span>
+topo--;               <span class="c">// o 25 saiu</span></pre>
+<p>Repara: pra tirar você <b>não apaga nada</b>. Só desce o <code class="i">topo</code> — o valor antigo será sobrescrito depois.</p>
+<div class="des" style="border-style:solid;margin:0 0 12px">
+  <div class="r">mexe na mochila</div>
+  <div class="mem" id="m7"></div>
+  <button class="peca" onclick="push7()">guardar item</button>
+  <button class="peca" onclick="pop7()">tirar de cima</button>
+  <button class="peca" onclick="r7()">esvaziar</button>
+  <div class="tela" style="margin:11px 0 0"><span class="r">estado</span><span id="o7">topo = -1 (vazia)</span></div>
+</div>
+<div class="dica"><span class="r">Fixa isso</span>
+Pilha = <b>LIFO</b>, entra e sai pelo <b>topo</b>. <code class="i">topo = -1</code> significa vazia.</div>`,
+  des:{ tipo:"ops",
+    q:'Você guardou 10, depois 25, depois 7 na mochila. Qual sai primeiro?',
+    ops:["O 7 — último a entrar","O 10 — primeiro a entrar","O 25 — o do meio","Os três ao mesmo tempo"],
+    certa:0,
+    ok:"Isso é LIFO! <b>L</b>ast <b>I</b>n, <b>F</b>irst <b>O</b>ut — último a entrar, primeiro a sair.",
+    err:"Pensa na pilha de pratos: você tira o de <b>cima</b>, que foi o último que você colocou. O 7." }
+});
+
+F.push({ m:2, nm:"Fila", ic:"🐛", xp:20,
+  tit:"Fila — os bichinhos esperando",
+  html:`
+<p>Os insetos entram numa fila pra serem caçados. Fila é como fila de banco: o primeiro que chega é o primeiro atendido. Isso é <b>FIFO</b>.</p>
+<pre><span class="k">int</span> fila[10];
+<span class="k">int</span> frente = 0;     <span class="c">// quem vai ser caçado</span>
+<span class="k">int</span> tras = -1;      <span class="c">// onde entra o novo</span>
+
+<span class="c">// ENTRAR na fila</span>
+tras++;
+fila[tras] = 10;
+
+tras++;
+fila[tras] = 25;
+
+<span class="c">// CAÇAR o primeiro</span>
+cout &lt;&lt; fila[frente];   <span class="c">// → 10</span>
+frente++;               <span class="c">// ele saiu</span></pre>
+<p>A diferença pra pilha: na fila você mexe nas <b>duas pontas</b> — entra atrás (<code class="i">tras</code>), sai na frente (<code class="i">frente</code>).</p>
+<div class="des" style="border-style:solid;margin:0 0 12px">
+  <div class="r">mexe na fila</div>
+  <div class="mem" id="m8"></div>
+  <button class="peca" onclick="enq8()">chegou inseto</button>
+  <button class="peca" onclick="deq8()">caçar o primeiro</button>
+  <button class="peca" onclick="r8()">limpar</button>
+  <div class="tela" style="margin:11px 0 0"><span class="r">estado</span><span id="o8">frente = 0, tras = -1 (vazia)</span></div>
+</div>
+<div class="dica"><span class="r">Pilha × Fila — cai como teoria</span>
+<b>Pilha</b>: uma ponta só (topo). Último entra, primeiro sai.
+<br><b>Fila</b>: duas pontas. Primeiro entra, primeiro sai.</div>`,
+  des:{ tipo:"ops",
+    q:'Entraram na fila: 10, depois 25, depois 7. Quem é caçado primeiro?',
+    ops:["O 10 — primeiro a entrar","O 7 — último a entrar","O 25 — o do meio","Escolhe aleatório"],
+    certa:0,
+    ok:"FIFO! <b>F</b>irst <b>I</b>n, <b>F</b>irst <b>O</b>ut. Ao contrário da pilha.",
+    err:"Fila não é pilha. Pensa na fila do banco: quem chegou <b>primeiro</b> é atendido primeiro. O 10." }
+});
+
+/* ---------- MUNDO 4 ---------- */
+F.push({ m:3, nm:"Eco", ic:"📍", xp:25,
+  tit:"Ponteiro — o eco do morcego",
+  html:`
+<p>Essa é a parte que trava todo mundo. Mas o morcego é <b>perfeito</b> pra explicar.</p>
+<p>O morcego não enxerga. Ele solta um eco e descobre <b>onde</b> as coisas estão. Ele não carrega a parede — ele sabe a <b>posição</b> dela.</p>
+<p>Ponteiro é isso: uma variável que guarda <b>um endereço</b>, não um valor.</p>
+<pre><span class="k">int</span> energia = 100;   <span class="c">// caixa com o valor 100</span>
+<span class="k">int</span> *eco;           <span class="c">// ponteiro: guarda ENDEREÇO</span>
+
+eco = &amp;energia;      <span class="c">// &amp; = "o endereço de"</span>
+
+cout &lt;&lt; *eco;        <span class="c">// * = "vá lá e traga o valor" → 100</span></pre>
+<ul>
+  <li><code class="i">*</code> na <b>declaração</b> = "isso é um ponteiro"</li>
+  <li><code class="i">&amp;</code> = "me dá o endereço de"</li>
+  <li><code class="i">*</code> no <b>uso</b> = "vai até lá e pega o valor"</li>
+</ul>
+<div class="des" style="border-style:solid;margin:0 0 12px">
+  <div class="r">solta o eco — aperta em ordem</div>
+  <div class="mem" id="m9"></div>
+  <button class="peca" id="b9a" onclick="v9(1)">1. int energia = 100;</button>
+  <button class="peca" id="b9b" onclick="v9(2)">2. eco = &amp;energia;</button>
+  <button class="peca" id="b9c" onclick="v9(3)">3. cout &lt;&lt; *eco;</button>
+  <button class="peca" onclick="v9(0)">limpar</button>
+  <div class="tela" style="margin:11px 0 0"><span class="r">o que rolou</span><span id="o9">Aperta o 1.</span></div>
+</div>
+<div class="dica"><span class="r">Fixa isso</span>
+Ponteiro = <b>endereço</b>, não valor. É o eco que diz <i>onde</i> a coisa está.
+<br>Com isso uma caixinha pode <b>apontar pra outra</b> — e é assim que a caverna se conecta.</div>`,
+  des:{ tipo:"ops",
+    q:'Com <code class="i">int energia = 100;</code> e <code class="i">int *eco = &amp;energia;</code> — o que <code class="i">eco</code> guarda?',
+    ops:["O endereço de memória da variável energia","O valor 100","Uma cópia da variável energia","Nada, fica vazio"],
+    certa:0,
+    ok:"Perfeito. O <code class='i'>eco</code> guarda <b>onde</b> o 100 mora. Pra pegar o valor você usa <code class='i'>*eco</code>.",
+    err:"Ponteiro guarda <b>endereço</b>, não valor. Pra chegar no 100 você usa <code class='i'>*eco</code>." }
+});
+
+F.push({ m:3, nm:"Escavar", ic:"⛏️", xp:25,
+  tit:"new e a seta → — cavando salas",
+  html:`
+<p>Juntando <b>struct</b> + <b>ponteiro</b> aparecem duas coisas novas.</p>
+<p><b>1. O <code class="i">new</code></b> — cria uma sala na memória <i>na hora</i> e devolve o endereço:</p>
+<pre><span class="k">struct</span> Sala {
+    string nome;
+    <span class="k">int</span> frutas;
+};
+
+Sala *s;              <span class="c">// ponteiro vazio</span>
+s = <span class="k">new</span> Sala;       <span class="c">// AGORA a sala existe</span></pre>
+<p><b>2. A seta <code class="i">-&gt;</code></b> — quando acessa struct <b>através de ponteiro</b>, troca o ponto pela seta:</p>
+<pre>Sala  s1;    s1.nome  = <span class="c">"Entrada"</span>;   <span class="c">// struct normal → PONTO</span>
+Sala *s2;    s2-&gt;nome = <span class="c">"Entrada"</span>;   <span class="c">// ponteiro     → SETA</span></pre>
+<p>É a mesma coisa. A seta só existe porque você chega lá por um endereço.</p>
+<div class="dica"><span class="r">Regra prática</span>
+Tem <code class="i">*</code> na declaração? Usa <code class="i">-&gt;</code>
+<br>Não tem <code class="i">*</code>? Usa <code class="i">.</code></div>`,
+  des:{ tipo:"lac",
+    q:'A sala foi criada com <code class="i">Sala *s = new Sala;</code>. Complete:',
+    antes:'s', depois:'nome = "Caverna";',
+    pecas:["->", ".", "::", "&"], certa:"->",
+    ok:"Boa! Tem <code class='i'>*</code> na declaração, então é <b>seta</b>.",
+    err:"O <code class='i'>s</code> é ponteiro (tem <code class='i'>*</code>). Com ponteiro usa <code class='i'>-&gt;</code>, não ponto." }
+});
+
+F.push({ m:3, nm:"1ª sala", ic:"🚪", xp:25,
+  tit:"A primeira sala da caverna",
+  html:`
+<p>Agora o pulo do gato. Cada sala guarda <b>os dados</b> e também <b>o endereço da próxima sala</b>:</p>
+<pre><span class="k">struct</span> Sala {
+    string nome;
+    <span class="k">int</span> frutas;
+    Sala *proxima;     <span class="c">// ← ponteiro pra OUTRA sala</span>
+};</pre>
+<p>Olha a última linha: dentro da sala tem um ponteiro <b>pra uma sala</b>. É isso que encadeia a caverna.</p>
+<pre>Sala *inicio;
+
+inicio = <span class="k">new</span> Sala;
+inicio-&gt;nome = <span class="c">"Entrada"</span>;
+inicio-&gt;frutas = 3;
+inicio-&gt;proxima = NULL;   <span class="c">// não tem sala depois ainda</span></pre>
+<pre>inicio → [ Entrada | 3 | NULL ]</pre>
+<p><code class="i">NULL</code> = <b>"vazio, não aponta pra lugar nenhum"</b>. É a parede no fim da caverna.</p>
+<div class="dica"><span class="r">Fixa isso</span>
+O <code class="i">inicio</code> é <b>sagrado</b> — é a única coisa que sabe onde a caverna começa.
+<br>Perdeu o <code class="i">inicio</code>, perdeu a caverna inteira.</div>`,
+  des:{ tipo:"ops",
+    q:'O que significa <code class="i">inicio-&gt;proxima = NULL;</code>?',
+    ops:["Não existe sala depois dessa — é o fim da caverna","A sala está vazia, sem frutas","A sala foi apagada da memória","O jogo deu erro"],
+    certa:0,
+    ok:"Exato. <code class='i'>NULL</code> é a placa de <b>fim</b>. É o que faz o <code class='i'>while</code> saber onde parar.",
+    err:"<code class='i'>NULL</code> não apaga nada. Significa &quot;não aponta pra lugar nenhum&quot; — fim da caverna." }
+});
+
+F.push({ m:3, nm:"Conectar", ic:"🔗", xp:30,
+  tit:"Ligando as salas",
+  html:`
+<p>Pra cavar a próxima sala são sempre os <b>mesmos 3 passos</b>. Decora eles — resolve a questão inteira da prova.</p>
+<pre>Sala *ultima = inicio;
+Sala *nova;
+
+nova = <span class="k">new</span> Sala;
+nova-&gt;nome = <span class="c">"Tunel"</span>;
+nova-&gt;frutas = 5;
+
+nova-&gt;proxima = NULL;      <span class="c">// 1. a nova vira a última</span>
+ultima-&gt;proxima = nova;    <span class="c">// 2. a antiga aponta pra ela</span>
+ultima = nova;             <span class="c">// 3. atualiza quem é a última</span></pre>
+<pre>inicio → [Entrada] → [Tunel] → NULL</pre>
+<div class="des" style="border-style:solid;margin:0 0 12px">
+  <div class="r">cava a caverna</div>
+  <div class="caverna" id="cav"></div>
+  <button class="peca" onclick="addS()">⛏️ cavar sala</button>
+  <button class="peca" onclick="remS()">🧨 desabar a primeira</button>
+  <button class="peca" onclick="zerS()">limpar</button>
+  <div class="tela" style="margin:11px 0 0"><span class="r">o que aconteceu</span><span id="oS">Caverna vazia. inicio = NULL</span></div>
+</div>
+<div class="dica"><span class="r">Os 3 passos — decora</span>
+<b>1.</b> nova aponta pra NULL &nbsp;→&nbsp; <b>2.</b> última aponta pra nova &nbsp;→&nbsp; <b>3.</b> nova vira a última</div>`,
+  des:{ tipo:"ops",
+    q:'Na hora de ligar uma sala nova no fim, qual linha faz a <b>conexão</b> acontecer?',
+    ops:["ultima->proxima = nova;","nova->proxima = NULL;","ultima = nova;","nova = new Sala;"],
+    certa:0,
+    ok:"Isso! Essa é a linha que <b>liga</b> — a antiga última para de apontar pra NULL e passa a apontar pra nova.",
+    err:"Pensa qual linha muda a seta de quem já estava lá. É <code class='i'>ultima-&gt;proxima = nova;</code>" }
+});
+
+F.push({ m:3, nm:"Voar", ic:"🦇", xp:30,
+  tit:"Percorrer — voando pela caverna",
+  html:`
+<p>Pra visitar todas as salas, o morceguinho <b>voa</b> de uma pra outra:</p>
+<pre>Sala *p = inicio;            <span class="c">// começa na primeira</span>
+
+<span class="k">while</span> (p != NULL) {          <span class="c">// enquanto não bateu na parede</span>
+    cout &lt;&lt; p-&gt;nome &lt;&lt; endl;  <span class="c">// mostra a sala atual</span>
+    p = p-&gt;proxima;           <span class="c">// VOA pra próxima</span>
+}</pre>
+<div class="tela"><span class="r">na tela</span>Entrada
+Tunel
+Salao</div>
+<p>Linha por linha:</p>
+<ul>
+  <li><code class="i">Sala *p = inicio;</code> — ponteiro auxiliar no começo</li>
+  <li><code class="i">while (p != NULL)</code> — "enquanto não chegou no fim"</li>
+  <li><code class="i">p = p-&gt;proxima;</code> — <b>essa é a linha que voa</b>. Sem ela, trava pra sempre</li>
+</ul>
+<div class="dica"><span class="r">Os 3 erros que reprovam</span>
+<b>1.</b> Usar o <code class="i">inicio</code> pra voar. Nunca! Usa um <code class="i">p</code> auxiliar ou perde a caverna.
+<br><b>2.</b> Esquecer <code class="i">p = p-&gt;proxima;</code> → while infinito.
+<br><b>3.</b> Esquecer <code class="i">nova-&gt;proxima = NULL;</code> ao criar → o while não sabe parar e lê lixo.</div>`,
+  des:{ tipo:"lac",
+    q:"Complete a linha que faz o morceguinho voar pra próxima sala:",
+    antes:'p = ', depois:';',
+    pecas:["p->proxima","inicio","NULL","p->nome"], certa:"p->proxima",
+    ok:"É essa! Sem ela o <code class='i'>while</code> fica preso na mesma sala pra sempre.",
+    err:"Pra avançar, o <code class='i'>p</code> precisa receber <b>o endereço da próxima sala</b>: <code class='i'>p-&gt;proxima</code>." }
+});
+
+F.push({ m:3, nm:"Desabar", ic:"🧨", xp:30,
+  tit:"Remover uma sala",
+  html:`
+<p>Remover a <b>primeira</b> sala é o caso que mais cai:</p>
+<pre>Sala *lixo = inicio;         <span class="c">// guarda quem vai sair</span>
+inicio = inicio-&gt;proxima;    <span class="c">// a 2ª vira a 1ª</span>
+<span class="k">delete</span> lixo;                 <span class="c">// libera a memória</span></pre>
+<p>Antes: <code class="i">inicio → [Entrada] → [Tunel] → NULL</code><br>
+Depois: <code class="i">inicio → [Tunel] → NULL</code></p>
+<p>Repara: você <b>não apaga na marra</b>. Só faz o <code class="i">inicio</code> pular pra frente — aí ninguém mais aponta pra sala velha, e o <code class="i">delete</code> devolve a memória.</p>
+<p>Pra remover uma do <b>meio</b>, você acha a <b>anterior</b> e faz ela pular:</p>
+<pre>anterior-&gt;proxima = atual-&gt;proxima;   <span class="c">// pula a do meio</span>
+<span class="k">delete</span> atual;</pre>
+<div class="dica"><span class="r">Fixa isso</span>
+Remover = <b>mudar quem aponta pra quem</b>, depois <code class="i">delete</code>.
+<br>Remover a primeira é especial: só o <code class="i">inicio</code> muda.</div>`,
+  des:{ tipo:"ops",
+    q:'Pra remover a <b>primeira</b> sala da caverna, qual é a linha principal?',
+    ops:["inicio = inicio->proxima;","delete inicio;","inicio = NULL;","inicio->proxima = NULL;"],
+    certa:0,
+    ok:"Isso! O <code class='i'>inicio</code> pula pra segunda sala. O <code class='i'>delete</code> vem depois, só pra liberar memória.",
+    err:"Antes de deletar você precisa fazer o <code class='i'>inicio</code> apontar pra segunda sala — senão perde a caverna toda." }
+});
+
+F.push({ m:3, nm:"CHEFÃO", ic:"👑", xp:50, chefe:true,
+  tit:"Chefão — a prova do dia 20",
+  html:`
+<p>Última fase. Esse é o código completo que o professor pede: criar a caverna, ligar e percorrer.</p>
+<pre><span class="k">#include</span> &lt;iostream&gt;
+<span class="k">using namespace</span> std;
+
+<span class="k">struct</span> Sala {
+    string nome;
+    <span class="k">int</span> frutas;
+    Sala *proxima;
+};
+
+<span class="k">int</span> main() {
+    Sala *inicio, *nova, *ultima;
+
+    <span class="c">// 1ª sala</span>
+    inicio = <span class="k">new</span> Sala;
+    inicio-&gt;nome = <span class="c">"Entrada"</span>;
+    inicio-&gt;frutas = 3;
+    inicio-&gt;proxima = NULL;
+    ultima = inicio;
+
+    <span class="c">// 2ª sala — os 3 passos</span>
+    nova = <span class="k">new</span> Sala;
+    nova-&gt;nome = <span class="c">"Tunel"</span>;
+    nova-&gt;frutas = 5;
+    nova-&gt;proxima = NULL;
+    ultima-&gt;proxima = nova;
+    ultima = nova;
+
+    <span class="c">// percorrer</span>
+    Sala *p = inicio;
+    <span class="k">while</span> (p != NULL) {
+        cout &lt;&lt; p-&gt;nome &lt;&lt; <span class="c">" - "</span> &lt;&lt; p-&gt;frutas &lt;&lt; <span class="c">" frutas"</span> &lt;&lt; endl;
+        p = p-&gt;proxima;
+    }
+
+    <span class="k">return</span> 0;
+}</pre>
+<div class="tela"><span class="r">na tela</span>Entrada - 3 frutas
+Tunel - 5 frutas</div>
+<div class="dica"><span class="r">Checklist da prova</span>
+✓ <code class="i">struct</code> com ponteiro pra ela mesma
+<br>✓ <code class="i">new</code> pra criar &nbsp;·&nbsp; <code class="i">-&gt;</code> pra preencher
+<br>✓ sempre <code class="i">proxima = NULL</code> na última
+<br>✓ percorrer com <code class="i">p</code> auxiliar e <code class="i">p = p-&gt;proxima</code></div>`,
+  des:{ tipo:"ops",
+    q:'O que acontece se você <b>esquecer</b> o <code class="i">nova-&gt;proxima = NULL;</code>?',
+    ops:["O while não sabe onde parar e entra em loop infinito ou lê lixo de memória",
+         "O programa não compila e dá erro de sintaxe",
+         "O C++ coloca NULL sozinho automaticamente",
+         "A caverna fica ordenada ao contrário"],
+    certa:0,
+    ok:"🏆 Fechou o jogo! Esse é <b>o</b> erro clássico da prova. Sem o NULL, o <code class='i'>while (p != NULL)</code> nunca encontra o fim.",
+    err:"Pensa no <code class='i'>while (p != NULL)</code>: se nenhuma sala aponta pra NULL, quando ele para? <b>Nunca.</b>" }
+});
+
+/* =========================================================
+   MOTOR
+   ========================================================= */
+const KEY='batcode_v1';
+let S = JSON.parse(localStorage.getItem(KEY) || 'null') || { xp:0, vidas:5, seq:0, feitas:[] };
+let at = null, resp = false, escolha = null;
+
+function salva(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+function liberada(i){ return i===0 || S.feitas.includes(i-1) || S.feitas.includes(i); }
+
+function hud(){
+  document.getElementById('sXP').innerHTML = S.xp + ' <small>XP</small>';
+  document.getElementById('sSeq').innerHTML = S.seq + ' <small>seguidas</small>';
+  let v=''; for(let i=0;i<5;i++) v += '<span class="'+(i<S.vidas?'':'off')+'">🩸</span>';
+  document.getElementById('sVida').innerHTML = v;
+  document.getElementById('fill').style.width = (S.feitas.length/F.length*100)+'%';
+}
+
+function mapa(){
+  hud();
+  let h = '';
+  MUNDOS.forEach((M, mi) => {
+    h += '<div class="mundo"><h3>'+M.icone+' '+M.nome+'</h3><div class="trilha">';
+    F.forEach((f, i) => {
+      if(f.m !== mi) return;
+      const ok = S.feitas.includes(i), lib = liberada(i);
+      const cls = 'fase ' + (ok?'ok':(lib?'lib':'lock')) + (f.chefe?' chefe':'');
+      h += '<button class="'+cls+'" '+(lib?'':'disabled')+' onclick="abre('+i+')">'
+         + '<div class="bolha">'+(ok?'✓':f.ic)+'</div>'
+         + '<div class="nm">'+f.nm+'</div></button>';
+    });
+    h += '</div></div>';
+  });
+  if(S.feitas.length === F.length){
+    h += '<div class="fim"><div class="bat">🦇👑</div><h2>Caverna completa!</h2>'
+       + '<p>'+S.xp+' XP · '+F.length+' fases. Você tem a base de C++ e de lista encadeada.</p>'
+       + '<p>Agora escreve com a mão: abre <code class="i">ex01</code> a <code class="i">ex05</code> '
+       + 'na pasta <code class="i">Exercicios-Listas-Encadeadas</code>, roda, apaga e refaz sem olhar.</p>'
+       + '<div class="nav" style="justify-content:center"><button class="btn gh" style="margin:0" onclick="zerar()">zerar progresso</button></div></div>';
+  } else {
+    h += '<div class="nav"><button class="btn gh" onclick="zerar()">zerar progresso</button></div>';
+  }
+  document.getElementById('tela').innerHTML = h;
+  window.scrollTo(0,0);
+}
+
+function abre(i){
+  at = i; resp = false; escolha = null;
+  const f = F[i];
+  const d = f.des;
+
+  // embaralha as alternativas (semente fixa por fase: mesma ordem ao refazer)
+  if(!f._ord){
+    const n = (d.tipo==='ops') ? d.ops.length : d.pecas.length;
+    const ord = [...Array(n).keys()];
+    let s = (i+1)*9973 + 13;
+    for(let k=n-1;k>0;k--){ s = (s*16807)%2147483647; const j = s%(k+1); [ord[k],ord[j]] = [ord[j],ord[k]]; }
+    f._ord = ord;
+  }
+  const ord = f._ord;
+
+  let dh = '<div class="des"><div class="r">Desafio · +'+f.xp+' XP</div><div class="q">'+d.q+'</div>';
+
+  if(d.tipo === 'ops'){
+    dh += '<div class="ops" id="ops">';
+    ord.forEach((orig,pos) => dh += '<button class="op" onclick="marca('+pos+')">'+d.ops[orig]+'</button>');
+    dh += '</div>';
+  } else {
+    dh += '<div style="margin-bottom:12px;font-family:ui-monospace,Menlo,monospace;font-size:13.5px">'
+        + d.antes + ' <span class="slot" id="slot">?</span> ' + d.depois + '</div>'
+        + '<div class="lac" id="ops">';
+    ord.forEach((orig,pos) => dh += '<button class="peca" onclick="marca('+pos+')">'+d.pecas[orig].replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</button>');
+    dh += '</div>';
+  }
+  dh += '<div id="fb"></div></div>';
+
+  document.getElementById('tela').innerHTML =
+    '<div class="licao">'
+    + '<div class="tag">'+MUNDOS[f.m].nome+'</div>'
+    + '<h2>'+f.ic+' '+f.tit+'</h2>'
+    + f.html + dh
+    + '<div class="nav">'
+    +   '<button class="btn" onclick="mapa()">← Mapa</button>'
+    +   '<button class="btn pri" id="bOk" disabled onclick="confirma()">Confirmar</button>'
+    + '</div></div>';
+  hud();
+  initDemo(i);
+  window.scrollTo(0,0);
+}
+
+function marca(pos){
+  if(resp) return;
+  escolha = pos;
+  const f = F[at], d = f.des, ord = f._ord;
+  const btns = document.querySelectorAll('#ops button');
+  btns.forEach((b,i) => b.style.borderColor = (i===pos ? 'var(--accent)' : 'var(--border)'));
+  if(d.tipo === 'lac'){
+    const s = document.getElementById('slot');
+    s.textContent = d.pecas[ord[pos]]; s.className = 'slot ch';
+  }
+  document.getElementById('bOk').disabled = false;
+}
+
+function confirma(){
+  if(resp || escolha===null) return;
+  resp = true;
+  const f = F[at], d = f.des, ord = f._ord;
+  const orig = ord[escolha];
+  const certo = (d.tipo === 'ops') ? (orig === d.certa) : (d.pecas[orig] === d.certa);
+  const btns = document.querySelectorAll('#ops button');
+
+  btns.forEach((b,pos) => {
+    b.disabled = true;
+    const o = ord[pos];
+    const isC = (d.tipo==='ops') ? (o===d.certa) : (d.pecas[o]===d.certa);
+    if(isC) b.classList.add('certa');
+    else if(pos===escolha) b.classList.add('errada');
+  });
+
+  const fb = document.getElementById('fb');
+  if(certo){
+    if(!S.feitas.includes(at)){ S.feitas.push(at); S.xp += f.xp; }
+    S.seq++;
+    fb.className = 'fb bom';
+    fb.innerHTML = '<b>Boa! +'+f.xp+' XP</b><br>' + d.ok;
+    document.getElementById('bOk').textContent = (at < F.length-1) ? 'Próxima fase →' : 'Ver o mapa →';
+    document.getElementById('bOk').onclick = () => { if(at < F.length-1 && liberada(at+1)) abre(at+1); else mapa(); };
+  } else {
+    S.seq = 0;
+    if(S.vidas > 0) S.vidas--;
+    fb.className = 'fb';
+    fb.innerHTML = '<b>Não foi dessa vez.</b><br>' + d.err + '<br><br>Lê a explicação de novo e tenta — a resposta certa está marcada.';
+    document.getElementById('bOk').textContent = 'Tentar de novo';
+    document.getElementById('bOk').onclick = () => abre(at);
+  }
+  document.getElementById('bOk').disabled = false;
+  salva(); hud();
+}
+
+function zerar(){
+  S = { xp:0, vidas:5, seq:0, feitas:[] };
+  salva(); mapa();
+}
+
+/* ========== DEMOS ========== */
+function initDemo(i){
+  if(i===2) v3(100);
+  if(i===3) r4();
+  if(i===6) r7();
+  if(i===7) r8();
+  if(i===8) v9(0);
+  if(i===11) desS();
+}
+
+/* energia */
+function v3(n){ const m=document.getElementById('m3'); if(!m)return;
+  m.innerHTML = '<div class="cel ac"><small>int energia</small><b>'+n+'</b></div>';
+  document.getElementById('o3').textContent = n;
+}
+
+/* for */
+let i4=0, s4='';
+function r4(){ i4=0; s4=''; p4(); }
+function p4(){ const m=document.getElementById('m4'); if(!m)return;
+  const f = i4>=5;
+  m.innerHTML = '<div class="cel'+(f?'':' ac')+'"><small>int i</small><b>'+i4+'</b></div>'
+    + '<div class="cel"><small>i &lt; 5 ?</small><b>'+(f?'FALSO — para':'VERDADE — roda')+'</b></div>';
+  document.getElementById('o4').textContent = s4 || '—';
+  const b=document.getElementById('b4'); if(b) b.disabled = f;
+}
+function v4(){ if(i4>=5)return; s4 += (s4?'\n':'')+'flap!'; i4++; p4(); }
+
+/* pilha */
+let P7=[], c7=0;
+function r7(){ P7=[]; c7=0; d7(); }
+function d7(){ const m=document.getElementById('m7'); if(!m)return;
+  m.innerHTML='';
+  if(!P7.length){ m.innerHTML='<div class="cel"><small>mochila</small><b>vazia</b></div>'; }
+  else P7.forEach((v,i)=>{ m.innerHTML += '<div class="cel'+(i===P7.length-1?' ac':'')+'"><small>['+i+']'+(i===P7.length-1?' ← topo':'')+'</small><b>'+v+'</b></div>'; });
+  const o=document.getElementById('o7');
+  if(o) o.textContent = 'topo = '+(P7.length-1)+(P7.length?'  ·  item de cima: '+P7[P7.length-1]:'  (vazia)');
+}
+function push7(){ if(P7.length>=6)return; const vals=[10,25,7,42,13,8]; P7.push(vals[c7%6]); c7++; d7();
+  document.getElementById('o7').textContent = 'topo++ e mochila[topo] = '+P7[P7.length-1]+'  →  topo = '+(P7.length-1); }
+function pop7(){ if(!P7.length)return; const v=P7.pop(); d7();
+  document.getElementById('o7').textContent = 'topo--  →  o '+v+' saiu (era o último a entrar). topo = '+(P7.length-1); }
+
+/* fila */
+let Q8=[], c8=0, fr8=0;
+function r8(){ Q8=[]; c8=0; fr8=0; d8(); }
+function d8(){ const m=document.getElementById('m8'); if(!m)return;
+  m.innerHTML='';
+  if(!Q8.length){ m.innerHTML='<div class="cel"><small>fila</small><b>vazia</b></div>'; }
+  else Q8.forEach((v,i)=>{ m.innerHTML += '<div class="cel'+(i===0?' ac':'')+'"><small>['+(fr8+i)+']'+(i===0?' ← frente':'')+'</small><b>'+v+'</b></div>'; });
+  const o=document.getElementById('o8');
+  if(o) o.textContent = 'frente = '+fr8+', tras = '+(fr8+Q8.length-1)+(Q8.length?'  ·  próximo a cair: '+Q8[0]:'  (vazia)');
+}
+function enq8(){ if(Q8.length>=6)return; const vals=[10,25,7,42,13,8]; Q8.push(vals[c8%6]); c8++; d8();
+  document.getElementById('o8').textContent = 'tras++ e fila[tras] = '+Q8[Q8.length-1]+'  →  entrou no FIM da fila'; }
+function deq8(){ if(!Q8.length)return; const v=Q8.shift(); fr8++; d8();
+  document.getElementById('o8').textContent = 'frente++  →  cacou o '+v+' (era o primeiro a entrar)'; }
+
+/* ponteiro */
+function v9(e){ const m=document.getElementById('m9'); if(!m)return;
+  const o=document.getElementById('o9');
+  const dis=(a,b,c)=>['b9a','b9b','b9c'].forEach((id,k)=>{const el=document.getElementById(id); if(el) el.disabled=[a,b,c][k];});
+  if(e===0){ m.innerHTML='<div class="cel"><small>memória</small><b>vazia</b></div>'; o.textContent='Aperta o 1.'; dis(false,true,true); return; }
+  if(e===1){ m.innerHTML='<div class="cel ac"><small>int energia &nbsp;(end. 0x50)</small><b>100</b></div>';
+    o.textContent='Criei a caixa "energia" com 100 dentro. Ela mora no endereço 0x50.'; dis(true,false,true); return; }
+  if(e===2){ m.innerHTML='<div class="cel"><small>int energia &nbsp;(end. 0x50)</small><b>100</b></div>'
+      +'<div class="vo" style="align-self:center">←</div>'
+      +'<div class="cel ac"><small>int *eco</small><b>0x50</b></div>';
+    o.textContent='O eco NÃO guarda 100. Ele guarda 0x50 — ONDE o 100 está.'; dis(true,true,false); return; }
+  if(e===3){ m.innerHTML='<div class="cel ac"><small>int energia &nbsp;(end. 0x50)</small><b>100</b></div>'
+      +'<div class="vo" style="align-self:center">←</div>'
+      +'<div class="cel"><small>int *eco</small><b>0x50</b></div>';
+    o.textContent='*eco = "vá até 0x50 e traga o valor" → escreveu 100 na tela.'; dis(true,true,true); }
+}
+
+/* caverna */
+const NMS=['Entrada','Tunel','Salao','Abismo','Ninho'];
+let CV=[], cs=0;
+function desS(){ const c=document.getElementById('cav'); if(!c)return;
+  c.innerHTML='';
+  if(!CV.length){ c.innerHTML='<span class="vaz">inicio = NULL (caverna vazia)</span>'; return; }
+  CV.forEach((x,i)=>{
+    const col=document.createElement('div'); col.className='cl';
+    col.innerHTML = i===0 ? '<div class="tg">inicio ↓</div>' : '<div class="tg"></div>';
+    const s=document.createElement('div'); s.className='sala'+(i===0?' aqui':'');
+    s.innerHTML='<div class="d">'+x+'</div><div class="p">'+(i===CV.length-1?'NULL':'prox')+'</div>';
+    col.appendChild(s); c.appendChild(col);
+    if(i<CV.length-1){ const a=document.createElement('div'); a.className='vo'; a.textContent='→'; c.appendChild(a); }
+  });
+  const f=document.createElement('div'); f.className='fimc'; f.textContent='→ NULL'; c.appendChild(f);
+}
+function addS(){ if(CV.length>=5)return; const pri=!CV.length; const n=NMS[cs%NMS.length]; CV.push(n); cs++; desS();
+  document.getElementById('oS').textContent = pri
+    ? 'Cavei a 1ª sala. O inicio aponta pra ela, e ela aponta pra NULL.'
+    : 'Cavei a "'+n+'" no fim. A sala anterior parou de apontar pra NULL e passou a apontar pra ela.';
+}
+function remS(){ if(!CV.length)return; const x=CV.shift(); desS();
+  document.getElementById('oS').textContent = 'A "'+x+'" desabou. O inicio pulou pra próxima, e o delete liberou a memória.';
+}
+function zerS(){ CV=[]; cs=0; desS(); document.getElementById('oS').textContent='Caverna vazia. inicio = NULL'; }
+
+mapa();
+</script>
+</body>
+</html>
